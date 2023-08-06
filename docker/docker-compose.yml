@@ -1,0 +1,15 @@
+version: '3'
+services:
+  strap:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: docker_demo:v1.0
+    working_dir: /workdir
+    stdin_open: true
+    tty: true
+    shm_size: 6g
+    volumes:
+      - /home/joakim/dev/style-transfer-for-digital-pathology:/workdir
+      - /media/datasets_isoAutoMultiCorr10Xv14:/media/datasets_isoAutoMultiCorr10Xv14
+      - /media/storage:/media/storage

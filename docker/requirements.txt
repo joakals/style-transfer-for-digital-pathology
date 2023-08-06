@@ -1,0 +1,12 @@
+captum
+h5py
+matplotlib
+numpy
+pandas
+pillow
+scipy
+#histomicstk
+scikit-learn
+seaborn
+tables
+tqdm
