@@ -4,12 +4,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: docker_demo:v1.0
+    image: strap:v1.0
     working_dir: /workdir
     stdin_open: true
     tty: true
     shm_size: 6g
     volumes:
       - /home/joakim/dev/style-transfer-for-digital-pathology:/workdir
+      - /home/joakim/Data:/data
       - /media/datasets_isoAutoMultiCorr10Xv14:/media/datasets_isoAutoMultiCorr10Xv14
+      - /media/tile_datasets-RS3-vol1/iso40Xv6_S06_normalized_HE_AP:/MI_S06_dataset
       - /media/storage:/media/storage
