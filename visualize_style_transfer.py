@@ -22,6 +22,13 @@ def plot_transferred_next_to_style_image(transferred_img_paths: list, style_img_
         axarr[0, i].imshow(transfer_img)
         axarr[1, i].imshow(style_img)
 
+        # remove ticks
+        axarr[0, i].set_xticks([])
+        axarr[1, i].set_xticks([])
+        axarr[0, i].set_yticks([])
+        axarr[1, i].set_yticks([])
+
+    f.tight_layout()
     f.savefig(output_path)
 
 

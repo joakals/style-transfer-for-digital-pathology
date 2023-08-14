@@ -56,7 +56,7 @@ def read_input_list(input_list: str):
     return scan_dirs
 
 
-def stylize_images_in_dir(input_list, style_dir, out_dir, alpha=1, content_size=1024, style_size=256, save_size=256):
+def stylize_images_in_dir(input_list, style_dir, out_dir, alpha=1, content_size=1024, style_size=256, save_size=512):
     """Style transfer of all scans in input_list
     
     All tiles in one scan are transferred using same style image
@@ -98,20 +98,20 @@ def stylize_images_in_dir(input_list, style_dir, out_dir, alpha=1, content_size=
         # We want to keep the following from the path by_project/train/RES/LABEL/PROJECT/SCANNER/CASEID
         to_keep = scan_dir.parts[-7:]
         out_dir_scan = out_dir.joinpath(*to_keep)
-        if out_dir_scan.is_dir():
-            i = 1
-            out_dir_temp = out_dir_scan
-            while out_dir_temp.is_dir():
-                out_dir_temp = out_dir_temp.parent / (out_dir_scan.name + '_{}'.format(i))
-                i += 1
-            out_dir_scan = out_dir_temp
+        # if out_dir_scan.is_dir():
+        #     i = 1
+        #     out_dir_temp = out_dir_scan
+        #     while out_dir_temp.is_dir():
+        #         out_dir_temp = out_dir_temp.parent / (out_dir_scan.name + '_{}'.format(i))
+        #         i += 1
+        #     out_dir_scan = out_dir_temp
         out_dir_scan.mkdir(exist_ok=True, parents=True)
         for style_path in random.sample(styles, 1):
             style_img = Image.open(style_path).convert('RGB')
             style_img.save(str(out_dir_scan / 'style_image.png'))
             
-            tiles = list(scan_dir.glob('*.png'))
-            for content_path in tqdm(tiles[20:30], desc='style transfer tiles'):
+            tiles = sorted(list(scan_dir.glob('*.png')))
+            for content_path in tqdm(tiles, desc='style transfer tiles'):
                 try:
                     content_img = Image.open(content_path).convert('RGB')
                     content = content_tf(content_img)
