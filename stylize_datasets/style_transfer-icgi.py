@@ -39,7 +39,7 @@ def collect_style_files(style_dir: Path, extensions: list):
     style_dir = style_dir.resolve()
     styles = []
     for ext in extensions:
-        styles += list(style_dir.rglob('*.' + ext))
+        styles += list(style_dir.glob('*.' + ext))
 
     assert len(styles) > 0, 'No images with specified extensions found in style directory' + style_dir
     styles = sorted(styles)
@@ -92,8 +92,11 @@ def stylize_images_in_dir(input_list, style_dir, out_dir, alpha=1, content_size=
     Image.MAX_IMAGE_PIXELS = None
     skipped_imgs = []
 
+    # Sample style images
+    sampled_style_images = random.sample(styles, len(scan_dirs))
+
     # actual style transfer as in AdaIN
-    for scan_dir in tqdm(scan_dirs, desc='style transfer scans'):
+    for i, scan_dir in enumerate(tqdm(scan_dirs, desc='style transfer scans')):
         # Assume the folder structure for scan_dir is ../dataset/by_project/train/RES/LABEL/PROJECT/SCANNER/CASEID
         # We want to keep the following from the path by_project/train/RES/LABEL/PROJECT/SCANNER/CASEID
         to_keep = scan_dir.parts[-7:]
@@ -106,34 +109,35 @@ def stylize_images_in_dir(input_list, style_dir, out_dir, alpha=1, content_size=
         #         i += 1
         #     out_dir_scan = out_dir_temp
         out_dir_scan.mkdir(exist_ok=True, parents=True)
-        for style_path in random.sample(styles, 1):
-            style_img = Image.open(style_path).convert('RGB')
-            style_img.save(str(out_dir_scan / 'style_image.png'))
-            
-            tiles = sorted(list(scan_dir.glob('*.png')))
-            for content_path in tqdm(tiles, desc='style transfer tiles'):
-                try:
-                    content_img = Image.open(content_path).convert('RGB')
-                    content = content_tf(content_img)
-                    style = style_tf(style_img)
-                    style = style.to(device).unsqueeze(0)
-                    content = content.to(device).unsqueeze(0)
-                    with torch.no_grad():
-                        output = style_transfer(vgg, decoder, content, style, alpha)
-                    output = output.cpu().squeeze_(0)
-                    output_img = torchvision.transforms.ToPILImage()(output)
-                    output_img = output_img.resize((save_size, save_size), Image.LANCZOS)
-                    out_path = out_dir_scan / content_path.name
-                    output_img = output_img.save(str(out_path))
-                    # output = np.array(output_img)
 
-                    content_img.close()
-                except Exception as err:
-                    print('skipped stylization of {} because of the following error; {})'.format(content_path, err))
-                    skipped_imgs.append(str(content_path))
-                    continue
+        style_path = sampled_style_images[i]
+        style_img = Image.open(style_path).convert('RGB')
+        style_img.save(str(out_dir_scan / 'style_image_{}.png'.format(style_path.stem)))
+        
+        tiles = sorted(list(scan_dir.glob('*.png')))
+        for content_path in tqdm(tiles, desc='style transfer {}'.format(scan_dir.name)):
+            try:
+                content_img = Image.open(content_path).convert('RGB')
+                content = content_tf(content_img)
+                style = style_tf(style_img)
+                style = style.to(device).unsqueeze(0)
+                content = content.to(device).unsqueeze(0)
+                with torch.no_grad():
+                    output = style_transfer(vgg, decoder, content, style, alpha)
+                output = output.cpu().squeeze_(0)
+                output_img = torchvision.transforms.ToPILImage()(output)
+                output_img = output_img.resize((save_size, save_size), Image.LANCZOS)
+                out_path = out_dir_scan / content_path.name
+                output_img = output_img.save(str(out_path))
+                # output = np.array(output_img)
 
-            style_img.close()    
+                content_img.close()
+            except Exception as err:
+                print('skipped stylization of {} because of the following error; {})'.format(content_path, err))
+                skipped_imgs.append(str(content_path))
+                continue
+
+        style_img.close()    
 
     if len(skipped_imgs) > 0:
         with open(str(out_dir / 'skipped_imgs.txt'), 'w') as f:
